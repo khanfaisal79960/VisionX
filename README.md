@@ -8,7 +8,7 @@
 
 ## 🌐 Live Demo
 
-👉 [**View Live Demo**](https://visionx.streamlit.app)
+👉 [**View Live Demo**](https://xvision.streamlit.app)
 
 ---
 

@@ -1,34 +1,40 @@
 import streamlit as st
+from ultralytics import YOLO
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import av
 import cv2
 import numpy as np
-from ultralytics import YOLO
 
 st.set_page_config(page_title="Vision X", layout="wide")
 st.title("🔍 Vision X")
 st.subheader("See the Unseen — Real-Time Object Detection")
 
-# Load YOLOv8 model
 @st.cache_resource
 def load_model():
-    return YOLO("yolov8n.pt")  # Use yolov8s.pt or higher for more accuracy
+    # Load YOLOv8 model (make sure yolov8n.pt is in the right place or accessible)
+    return YOLO("yolov8n.pt")
 
 model = load_model()
 
-# Start webcam
-run = st.checkbox('Start Webcam')
-FRAME_WINDOW = st.image([])
+class YOLOProcessor(VideoProcessorBase):
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
 
-if run:
-    cap = cv2.VideoCapture(0)
+        # Run YOLO detection on the image
+        results = model(img)[0]
 
-    while run:
-        ret, frame = cap.read()
-        if not ret:
-            st.error("Webcam not accessible.")
-            break
+        # Get annotated frame (this returns a numpy array with boxes drawn)
+        annotated_img = results.plot()
 
-        results = model(frame)[0]
-        annotated_frame = results.plot()
+        # Convert annotated image from RGB to BGR if needed (YOLO returns RGB)
+        # But results.plot() in ultralytics returns BGR by default, so no conversion required here.
 
-        FRAME_WINDOW.image(annotated_frame, channels='BGR')
-    cap.release()
+        # Return frame to streamlit-webrtc
+        return av.VideoFrame.from_ndarray(annotated_img, format="bgr24")
+
+webrtc_streamer(
+    key="yolo",
+    video_processor_factory=YOLOProcessor,
+    media_stream_constraints={"video": True, "audio": False},
+    async_processing=True,
+)

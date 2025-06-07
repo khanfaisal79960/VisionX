@@ -74,6 +74,7 @@ VisionX/
 ├── requirements.txt
 ├── yolov8n.pt
 ├── README.md
+├── packages.txt
 ├── assets/
     └── screenshot_1.png
     └── cover_image.png
